@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,7 +16,7 @@ public class Server {
 	private static DatagramPacket listenPacket;
     private static DatagramSocket serverSocket;
     private static int port = 10561;
-    private static ConcurrentHashMap<InetAddress, Client> clients = new ConcurrentHashMap<InetAddress, Client>();
+    private static ConcurrentHashMap<String, Client> clients = new ConcurrentHashMap<String, Client>();
 
 	public static void main(String[] args) {
 		try {
@@ -30,7 +31,7 @@ public class Server {
 			System.exit(0);
 		}
 
-		byte[] recever = new byte[10];
+		byte[] recever = new byte[30];
 		listenPacket = new DatagramPacket(recever, recever.length);
 		while (true) {
 			try {
@@ -45,41 +46,62 @@ public class Server {
 					client.setIp(listenPacket.getAddress());
 					client.setPort(listenPacket.getPort());
 					client.setTs(System.currentTimeMillis());
-					clients.put(listenPacket.getAddress(), client);
+					clients.put(listenPacket.getAddress().getHostAddress(), client);
 				}
 				Packet packet = new Packet();
 					packet.decoder(listenPacket.getData());
 					
 					switch (packet.getTarget()) {
 					case 0x01:
-						for (Map.Entry<InetAddress, Client> entry : clients.entrySet()) {
-							String result = "";
-							if (!entry.equals(client)) {
-								result += entry.getValue().getIp().getHostAddress();
+						String result = "";
+						System.out.println("clients size = " + clients.size());
+						for (Map.Entry<String, Client> entry : clients.entrySet()) {
+							if (!entry.getKey().equals(client.getIp().getHostAddress())) {
+								result += entry.getValue().getIp().getHostAddress() + ":" + entry.getValue().getPort() + " ";
 							}
 						}
-						byte[] lis = listenPacket.getData();
+						response(result.getBytes(), listenPacket);
+						
+						/*byte[] lis = listenPacket.getData();
 						for(byte l : lis ) {
 							System.out.println(l & 0xff);
-						}
+						}*/
 						//System.out.println(new String(packet.getData().array(), 0, packet.getData().array().length));
 						break;
+						
+					case 0x02:
+						ByteBuffer bb = ByteBuffer.allocate(30);
+						bb.put(listenPacket.getData());
+						System.out.println("data size = " + listenPacket.getData().length + " " + new String(bb.array()));
+						//byte[] msg = listenPacket.getData();
+						for(byte l : bb.array()) {
+							System.out.println(l & 0xff);
+						}
+						break;
+					
 					default:
 						break;
 					}
 				//packet.getLength();
-				response(listenPacket);
+				//response(listenPacket);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 	
+	private static void response(byte[] data, DatagramPacket packet) {
+		try {
+			serverSocket.send(new DatagramPacket(data, data.length, packet.getAddress(), packet.getPort()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private static void response(DatagramPacket datagramPacket) {
 		try {
 			serverSocket.send(
-					new DatagramPacket("654/r/n".getBytes(), 3, datagramPacket.getAddress(), datagramPacket.getPort()));
-
+					new DatagramPacket("654".getBytes(), 3, datagramPacket.getAddress(), datagramPacket.getPort()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
