@@ -1,23 +1,26 @@
 package com.wenyun.model;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.DatagramChannel;
 
 public class Client {
-	private InetAddress ip;
-	private int port;
+	private InetSocketAddress address;
 	private long ts;
+	private DatagramChannel channel;
 	
-	public InetAddress getIp() {
-		return ip;
+	public DatagramChannel getChannel() {
+		return channel;
 	}
-	public void setIp(InetAddress ip) {
-		this.ip = ip;
+	public void setChannel(DatagramChannel channel) {
+		this.channel = channel;
 	}
-	public int getPort() {
-		return port;
+	public InetSocketAddress getAddress() {
+		return address;
 	}
-	public void setPort(int port) {
-		this.port = port;
+	public void setAddress(InetSocketAddress address) {
+		this.address = address;
 	}
 	public long getTs() {
 		return ts;
