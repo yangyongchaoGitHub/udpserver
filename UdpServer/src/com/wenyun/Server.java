@@ -70,16 +70,16 @@ public class Server {
 							isa = (InetSocketAddress) sc.receive(buffer);
 
 							key.interestOps(SelectionKey.OP_READ);
-							System.out.println("client ----> IP: " + isa.getAddress().getHostAddress() + ", port: "
-									+ isa.getPort());
+							System.out.println("client ----> IP: " + isa.getAddress().toString());
 							//System.out.println("receiveBuffer.position() = " + buffer.position());
-							client = clients.get(isa.getAddress().getHostAddress());
+							client = clients.get(isa.toString());
 							if (client == null) {
 								client = new Client();
 								client.setChannel(sc);
 								client.setAddress(isa);
 								client.setTs(System.currentTimeMillis());
-								clients.put(isa.getAddress().getHostAddress(), client);
+								//System.out.println(isa.toString());
+								clients.put(isa.toString(), client);
 							} else {
 								client.setChannel(sc);
 								client.setAddress(isa);
@@ -93,8 +93,12 @@ public class Server {
 								System.out.println("clients size = " + clients.size());
 								for (Map.Entry<String, Client> entry : clients.entrySet()) {
 									if (!entry.getKey().equals(client.getAddress().toString())) {
-										//System.out.println(client.getAddress().toString() + " " + entry.getValue().getAddress().getHostName());
-										result += entry.getValue().getAddress().getHostName() + " ";
+										System.out.println(entry.getKey() + " " + client.getAddress().toString());
+												 /*+ " " + client.getAddress().getPort() + 
+												 " " + client.getAddress().getHostName() + 
+												 " " + client.getAddress().getHostString() + 
+												 " " + client.getAddress().getAddress());*/
+										result += entry.getValue().getAddress().toString() + " ";
 									}
 								}
 								byte[] data = result.getBytes();
@@ -122,8 +126,9 @@ public class Server {
 								// response("11".getBytes(), listenPacket);
 								break;
 							case 0x03:
+								System.out.println("03");
 								for (Map.Entry<String, Client> entry : clients.entrySet()) {
-									if (!entry.getKey().equals(client.getAddress().getHostName().toString())) {
+									if (!entry.getKey().equals(client.getAddress().toString())) {
 										System.out.println(entry.getValue().getChannel() + 
 												" " + entry.getValue().getAddress() + 
 												" " + client.getAddress().getHostName());
@@ -151,10 +156,10 @@ public class Server {
 		byte[] d = new byte[]{0x01, 0x01, 0x01};
 		ByteBuffer bb = ByteBuffer.allocate(3);
 		bb.put(d);
+		bb.flip();
 		try {
 			datagramChannel.send(bb, inetSocketAddress);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
